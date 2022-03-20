@@ -20,10 +20,7 @@ CHANNELS = 1 # chaque trame a 1 échantillon (16 bits)
 RATE = 48000 # 48000 images sont collectées par secondes. L'unité est le Hz. On a obtenu ce chiffre en faisant "p.get_device_info_by_index(0)['defaultSampleRate']" (sachant que l'index de notre usb microphone device est de 0)
 # En d'autres termes, par seconde, le système lit 48000/1025 morceaux de la mémoire (soit c.4,7). Ici, cela dépend du microphone. 
 FRAMES_PER_BUFFER = 1024 # nombre de trames dans lesquelles les signaux sont divisés (ce chiffre est une puissance de 2, ici 2**10)
-
-# x = st.slider('Select a value')
-# st.write(x, 'squared is', x * x)
-
+st.set_option('deprecation.showPyplotGlobalUse', False)
 
 class ConvertAudioToText():
     def __init__(self, language):
