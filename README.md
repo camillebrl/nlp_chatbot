@@ -3,7 +3,7 @@
 ## StreamBOT is a Streamlit app representing a vocal bot to which you can ask any question you want about anything.
 
 ### A demo of the app can be found here:
-To add..
+https://user-images.githubusercontent.com/69735051/159186371-00d02d04-65b1-446e-9d7d-e89d9bc4d19c.mp4
 
 ### You can also find here the detailed explications of the algorithm:
 ![1](https://user-images.githubusercontent.com/69735051/159179831-c6113cee-2aea-41d9-89cc-f3cca697d51b.PNG)
