@@ -173,7 +173,7 @@ def stop():
     audio_converter.save_audio_wav()
     question = audio_converter.main_conversion_audio_to_text()
     answer_from_bot = str(GoogleTranslator(source='auto', target=language.split("-")[0]).translate(f"I am analyzing your question. To do so, I am plotting here the Dependency Grammar of your question asked."))
-    subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", f"{language.split('-')[0]}"], 
+    subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name)], 
                     stdout=subprocess.PIPE, 
                     universal_newlines=True)
     subprocess.run(["play", "tts_output.wav"], stdout=subprocess.PIPE, 
@@ -194,14 +194,14 @@ def stop():
                     answer_from_bot = str(GoogleTranslator(source='auto', target=language.split("-")[0]).translate(answer))
                 except:
                     answer_from_bot = answer
-                subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", f"{language.split('-')[0]}"], 
+                subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name)], 
                                 stdout=subprocess.PIPE, 
                                 universal_newlines=True)
                 subprocess.run(["play", "tts_output.wav"], stdout=subprocess.PIPE, 
                                 universal_newlines=True)
             else:
                 answer_from_bot = str(GoogleTranslator(source='auto', target=language.split("-")[0]).translate("Sorry, I haven't found any answer for your question. Please try another question."))
-                subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", f"{language.split('-')[0]}"], 
+                subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name)], 
                                 stdout=subprocess.PIPE, 
                                 universal_newlines=True)
                 subprocess.run(["play", "tts_output.wav"], stdout=subprocess.PIPE, 
@@ -210,7 +210,7 @@ def stop():
             print(e)
     else:
         answer_from_bot = str(GoogleTranslator(source='auto', target=language.split("-")[0]).translate("Sorry, I haven't understood your question. Please try again."))
-        subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", f"{language.split('-')[0]}"], 
+        subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name)], 
                         stdout=subprocess.PIPE, 
                         universal_newlines=True)
         subprocess.run(["play", "tts_output.wav"], stdout=subprocess.PIPE, 
@@ -248,6 +248,7 @@ if variables.entity_queried != None and variables.entity_queried != "":
         stop_button = st.button("Click to stop recording", on_click=stop)
         if language != "None" and start_button:
             dico_models_text_to_speech = {"en": "tts_models/en/ljspeech/tacotron2-DDC", "fr": "tts_models/fr/mai/tacotron2-DDC"}
+            model_name = dico_models_text_to_speech[language.split('-')[0]]
             audio_converter = ConvertAudioToText(language)            
             defineentity.p = pyaudio.PyAudio() # On instancie un objet Pyaudio
             defineentity.stream = defineentity.p.open(format=FORMAT,
