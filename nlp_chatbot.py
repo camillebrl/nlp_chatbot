@@ -33,25 +33,11 @@ class ConvertAudioToText():
         self.final_result = "" # stocke le résultat final (le texte de l'audio transcrit)
         self.audio = None # ouvre le fichier .wav en tant qu'instance AudioSegment à l'aide de la méthode AudioSegment.from_file() (ici, from_wav)
         # Il est important de comprendre que pyaudio découpe les données en CHUNKS (trames), au lieu d'avoir une quantité continue d'audio, afin de limiter la puissance de traitement requise (RAM), puisque la Raspberry a une RAM assez faible (512M pour notre Raspberry Pi Zero W). 
-        self.WAVE_OUTPUT_FILENAME = datetime.now().strftime("%d%b%Y_%Hh%Mmin.wav") # on nomme le fichier avec %d le jour d'aujourd'hui, %b le nom du mois en anglais, %Y l'année en 4 chiffres, puis _, puis l'heure suivie de h, et les minutes suivies de "min". On place l'audio dans le folder "audio_folder".
-        self.WAVE_ANSWER_FILENAME = datetime.now().strftime("answer_%d%b%Y_%Hh%Mmin.wav")
+        self.WAVE_OUTPUT_FILENAME = datetime.now().strftime("audio/%d%b%Y_%Hh%Mmin.wav") # on nomme le fichier avec %d le jour d'aujourd'hui, %b le nom du mois en anglais, %Y l'année en 4 chiffres, puis _, puis l'heure suivie de h, et les minutes suivies de "min". On place l'audio dans le folder "audio_folder".
     
     def register_audio(self, stream):
         input_audio = stream.read(2 * RATE, exception_on_overflow = False) # on enregistre 1s
         self.frames.append(input_audio) # on ajoute la seconde d'enregistrement à frames (voir explication de la variable "frames")
-
-    def save_answer_wav(self):
-        wav_file = wave.open(self.WAVE_ANSWER_FILENAME, "wb") # on ouvre ce document wav qui porte le nom ci-dessus (WAVE_ANSWER_FILENAME) pour écrire dessus
-        wav_file.setnchannels(1) # On rappelle les channels de l'audio
-        wav_file.setsampwidth(2)
-        wav_file.setframerate(48000) # On rappelle les Hz de l'audio
-        wav_file.writeframes(b''.join(self.frames)) # on écrit dans le fichier wav ce qu'on a enregistré ("frames")
-        wav_file.close() # on ferme le fichier wav.
-        self.frames = [] # On vide l'enregistrement de la mémoire.
-        song = AudioSegment.from_wav(self.WAVE_ANSWER_FILENAME) # On récupère le fichier wav sauvé
-        #song = song + 20 # On lui ajoute manuellement 20db (pour que le son soit plus fort)
-        song.export(self.WAVE_ANSWER_FILENAME, "wav") # On exporte de nouveau le fichier wav qui a ce coup-ci 20db de plus.
-        st.text(f"audio {self.WAVE_ANSWER_FILENAME}.wav saved!")
 
     def save_audio_wav(self):
         wav_file = wave.open(self.WAVE_OUTPUT_FILENAME, "wb") # on ouvre ce document wav qui porte le nom ci-dessus (WAVE_OUTPUT_FILENAME) pour écrire dessus
@@ -93,16 +79,16 @@ class ConvertAudioToText():
             if split_audio.duration_seconds == 0: # Dans le cas où on est au début  de l'audio (si on est à la fin de l'audio, on a self.audio[t1-1000:t2].duration_seconds != 0 donc on ne rentre pas ici), mais où self.audio[t1-1000:t2].duration_seconds == 0 puisque self.audio[t1-1000] n'existe pas.
                 split_audio = self.audio[t1:t2+1000] # Dans le cas où on est au début  de l'audio
         try:
-            os.remove("audio_exported.wav") # s'il y a déjà un slot d'audio exporté (voir ci-dessous: on exporte chaque slot d'audio, que l'on traite avec la fonction de speech_recognition, et que l'on supprime une fois la transcription du slot effectuée). Le try / except permet de ne pas avoir d'erreur si jamais on est au premier découpage de l'audio, par exemple.
+            os.remove("audio/audio_exported.wav") # s'il y a déjà un slot d'audio exporté (voir ci-dessous: on exporte chaque slot d'audio, que l'on traite avec la fonction de speech_recognition, et que l'on supprime une fois la transcription du slot effectuée). Le try / except permet de ne pas avoir d'erreur si jamais on est au premier découpage de l'audio, par exemple.
         except:
             pass
-        split_audio.export("audio_exported.wav", format="wav") # On exporte le slot de 10 secondes (entre 11 et 12 exactement puisqu'on a pris une seconde de plus au début et une de plus à la fin (à part quand on est au début ou à la fin de l'audio, comme expliqué ci-dessus))
+        split_audio.export("audio/audio_exported.wav", format="wav") # On exporte le slot de 10 secondes (entre 11 et 12 exactement puisqu'on a pris une seconde de plus au début et une de plus à la fin (à part quand on est au début ou à la fin de l'audio, comme expliqué ci-dessus))
         try:
-            res = self.conversion_into_text("audio_exported.wav") # on appelle la fonction conversion_into_text détaillée ci-dessus qui retourne la transcription (en string) de l'audio (path du slot de l'audio: audio_exported.wav, qu'on connaît puisque c'est nous qui l'avons exporté ci-dessus)
+            res = self.conversion_into_text("audio/audio_exported.wav") # on appelle la fonction conversion_into_text détaillée ci-dessus qui retourne la transcription (en string) de l'audio (path du slot de l'audio: audio/audio_exported.wav, qu'on connaît puisque c'est nous qui l'avons exporté ci-dessus)
             self.final_result += " " + res # On ajoute la transcription du slot au résultat final. On a ajouté un espace entre chaque transcription de slots (" ") qui est nécessaire pour ne pas avoir 2 mots collés. 
         except:
             pass
-        os.remove("audio_exported.wav") # On supprime le slot une fois la transcription effectuée
+        os.remove("audio/audio_exported.wav") # On supprime le slot une fois la transcription effectuée
 
     def main_conversion_answer_to_text(self):
         st.text("Starting converting audio file...")
@@ -170,10 +156,10 @@ def stop():
     audio_converter.save_audio_wav()
     question = audio_converter.main_conversion_audio_to_text()
     answer_from_bot = str(GoogleTranslator(source='auto', target=language.split("-")[0]).translate(f"I am analyzing your question. To do so, I am plotting here the Dependency Grammar of your question asked."))
-    subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name)], 
+    subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name), "--out_path", "audio/tts_output.wav"], 
                     stdout=subprocess.PIPE, 
                     universal_newlines=True)
-    subprocess.run(["play", "tts_output.wav"], stdout=subprocess.PIPE, 
+    subprocess.run(["play", "audio/tts_output.wav"], stdout=subprocess.PIPE, 
                     universal_newlines=True)
     stanza_model = stanza.Pipeline(language.split("-")[0]) # This sets up a default neural pipeline in the right language
     doc = stanza_model(question)
@@ -191,26 +177,26 @@ def stop():
                     answer_from_bot = str(GoogleTranslator(source='auto', target=language.split("-")[0]).translate(answer))
                 except:
                     answer_from_bot = answer
-                subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name)], 
+                subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name), "--out_path", "audio/tts_output.wav"], 
                                 stdout=subprocess.PIPE, 
                                 universal_newlines=True)
-                subprocess.run(["play", "tts_output.wav"], stdout=subprocess.PIPE, 
+                subprocess.run(["play", "audio/tts_output.wav"], stdout=subprocess.PIPE, 
                                 universal_newlines=True)
             else:
                 answer_from_bot = str(GoogleTranslator(source='auto', target=language.split("-")[0]).translate("Sorry, I haven't found any answer for your question. Please try another question."))
-                subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name)], 
+                subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name), "--out_path", "audio/tts_output.wav"], 
                                 stdout=subprocess.PIPE, 
                                 universal_newlines=True)
-                subprocess.run(["play", "tts_output.wav"], stdout=subprocess.PIPE, 
+                subprocess.run(["play", "audio/tts_output.wav"], stdout=subprocess.PIPE, 
                                 universal_newlines=True)
         except Exception as e:
             print(e)
     else:
         answer_from_bot = str(GoogleTranslator(source='auto', target=language.split("-")[0]).translate("Sorry, I haven't understood your question. Please try again."))
-        subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name)], 
+        subprocess.run(['tts', "--text", f"{answer_from_bot}", "--model_name", str(model_name), "--out_path", "audio/tts_output.wav"], 
                         stdout=subprocess.PIPE, 
                         universal_newlines=True)
-        subprocess.run(["play", "tts_output.wav"], stdout=subprocess.PIPE, 
+        subprocess.run(["play", "audio/tts_output.wav"], stdout=subprocess.PIPE, 
                         universal_newlines=True)
 
 class Variables():
